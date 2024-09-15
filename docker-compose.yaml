@@ -1,0 +1,75 @@
+x-common: &default_env_vars
+  MESSAGE_BROKER_USER: guest
+  MESSAGE_BROKER_PASSWORD: guest
+
+services:
+  amqp:
+    image: rabbitmq:3.13-management
+    container_name: amqp_broker
+    ports:
+      - "5672:5672" # AMQP 0.9.1 and AMQP 1.0 ports
+      - "15672:15672" # Management UI port
+      - "5671:5671" # SSL port (optional, if you need SSL connections)
+    environment:
+      <<: *default_env_vars # Reference the common environment variables
+      MESSAGE_BROKER_USER: ${MESSAGE_BROKER_USER}
+      MESSAGE_BROKER_PASSWORD: ${MESSAGE_BROKER_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    command: >
+      bash -c "
+      rabbitmq-plugins enable --offline rabbitmq_amqp1_0 &&
+      rabbitmq-server"
+
+  # ldap:
+  #   image: osixia/openldap:1.5.0
+  #   container_name: ldap_server
+  #   environment:
+  #     LDAP_ORGANISATION: "Example Inc."
+  #     LDAP_DOMAIN: "example.com"
+  #     LDAP_ADMIN_PASSWORD: admin
+  #   ports:
+  #     - "389:389" # LDAP port
+  #     - "636:636" # LDAPS port (if using TLS)
+  #   volumes:
+  #     - ldap_data:/var/lib/ldap
+  #     - ldap_config:/etc/ldap/slapd.d
+
+  # phpldapadmin:
+  #   image: osixia/phpldapadmin:0.9.0
+  #   container_name: ldap_admin
+  #   environment:
+  #     PHPLDAPADMIN_LDAP_HOSTS: ldap
+  #     PHPLDAPADMIN_HTTPS: "false"
+  #   ports:
+  #     - "8080:80" # phpLDAPadmin web interface
+  #   depends_on:
+  #     - ldap
+
+  # go_server:
+  #   image: golang:1.20-alpine
+  #   container_name: go_server
+  #   volumes:
+  #     - ./go-app:/app # Bind mount your Go application code
+  #     - /app/tmp # Needed by Air for hot reloading
+  #   working_dir: /app
+  #   command: air
+  #   ports:
+  #     - "8081:8081"
+  #   depends_on:
+  #     - amqp
+  #     - ldap
+  #   environment:
+  #     - AMQP_URL=amqp://guest:guest@amqp_broker:5672/
+  #     - LDAP_URL=ldap://ldap_server:389/
+  # <<: *default_env_vars # Reference the common environment variables
+  # MESSAGE_BROKER_USER: ${MESSAGE_BROKER_USER}
+  # MESSAGE_BROKER_PASSWORD: ${MESSAGE_BROKER_PASSWORD}
+  #   volumes:
+  #     - ./go-app:/app
+  #     - ./go-app/.air.toml:/app/.air.toml # Config file for air live reload
+
+volumes:
+  rabbitmq_data:
+  # ldap_data:
+  # ldap_config:
