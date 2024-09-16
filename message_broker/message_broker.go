@@ -42,10 +42,7 @@ func (mbc *MessageBrokerClient) ConsumeFromTopic(ctx context.Context, topicName,
 	subscriptionPath := fmt.Sprintf("%s/Subscriptions/%s", topicName, subscriptionName)
 
 	// Create a receiver for the subscription with the correct LinkSource and LinkCredit options
-	receiver, err := session.NewReceiver(
-		amqp.Link{Address: subscriptionPath}, // Set the source address
-		amqp.LinkCredit(10),                  // Set prefetch credit
-	)
+	receiver, err := session.NewReceiver(ctx, subscriptionPath, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create AMQP receiver: %v", err)
 	}
